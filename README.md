@@ -33,8 +33,12 @@ CreationTime`，一列是一次狀態轉換，所以同一筆驗證事件會出�
 
 看不到「計費報表」選單是權限問題，非 admin 角色要另外加權限。
 
-`fetch/fetch_202608.js` 是走 API 的備援做法，需要自己填 tenantId，
-一般情況用上面的 UI 匯出就好。
+另外兩種取數方式：
+
+- `fetch/console_snippet.js` —— 在已登入的瀏覽器 F12 console 貼上執行，
+  借用當下登入狀態，自動抓租戶清單並逐一下載 JSON。適合不想一個一個點匯出的時候。
+- `fetch/fetch_billing.py` —— 直接用租戶 Client/Secret 打 API，適合有 egress
+  權限的環境，一行指令跑完全部客戶。
 
 ### 2. 計算與驗算
 
@@ -79,7 +83,8 @@ python3 tests/test_algorithms.py
 | `saas_billing/config.py` | 客戶單價、算法、tenant、承接餘額 |
 | `saas_billing/algorithms.py` | 算法 1／算法 2（依實作 SQL）、JUJI C–L 欄、驗算公式 |
 | `saas_billing/report.py` | CLI，輸出各客戶要填的數字 |
-| `fetch/fetch_202608.js` | 走 API 的備援取數方式 |
+| `fetch/console_snippet.js` | 瀏覽器 console 一貼即跑的取數腳本 |
+| `fetch/fetch_billing.py` | 直接用 Client/Secret 打 API 取數 |
 | `docs/202608-carryforward.md` | 承接數字與待確認事項 |
 | `tests/test_algorithms.py` | 算法的合成資料測試 |
 
