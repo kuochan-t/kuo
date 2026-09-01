@@ -85,3 +85,46 @@ client-rules.md 寫的算法 2（總筆數 − Incomplete）也只有 2026/03 �
 
 **所以腳本不會自動填 Aftee 的 Usage Count**，只輸出各 workflow 的算法 2 筆數，
 等國展確認正確規則後再補上。這是客戶帳單金額，寧可停下來問。
+
+---
+
+## 補充：算法定義以 Notion「e-KYC SaaS 計費報表」為準
+
+自 e-KYC 3.17.0 起，計費已由後台的「計費報表」功能實作，Notion 頁面
+（R&D / Backend Team / 文件中心）附有兩個算法的 SQL。這份定義和 skill
+reference (`client-rules.md`) 的文字說明**不完全一致**：
+
+| | client-rules.md 的說法 | 實際實作的 SQL |
+|---|---|---|
+| 算法1 | 拿掉未完成，同一個 EventName+CustomerID 算 1 筆 | `COUNT(*) FROM VerificationEvent WHERE State != 'Incomplete'` |
+| 算法2 | 拿掉 Agent 與 Incomplete 後的筆數 | `COUNT(*) FROM VerificationEventState WHERE State != 'Incomplete' AND ChildEventId IS NULL AND Source != 'Agent'` |
+
+**算法 2 兩邊一致**（匯出的 CSV 本來就只含主事件，`ChildEventId IS NULL`
+不用另外處理）。
+
+**算法 1 兩邊不同**：SQL 是數「驗證事件筆數」，不是數不重複的
+EventName+CustomerID。同一個客戶在同月開了兩次驗證流程，SQL 算 2 筆，
+舊寫法只算 1 筆。這會**低估**帳單。影響 Amazing Talker、XO Dating、
+GamaniaXchanger 三家。
+
+工具兩種都算，數字不同時會擋下來要你確認，方便先跟 115/07 對一次再決定。
+
+## 補充：Aftee 的 b2b / b2c / Samsung 來自 EventName
+
+CSV 匯出欄位是 `VerificationEventId, EventName, CustomerId, State, Source,
+CreationTime`，其中 EventName 就是「身分驗證條件或工作流程名稱」——
+也就是 Aftee 報表裡的 b2b / b2c / Samsung。所以拆分欄位是確定的，
+還沒確定的只是「Usage Count 的 B2B / B2C 要怎麼從這些數字得出來」。
+
+## 取數方式已經簡化很多
+
+不必再跑 `ekyc_reports.sh`，也不必手動組 API URL：
+
+1. 登入後台**主控端 (Host)** → 左側選單「計費報表」
+2. 日期選 2026-08-01 ~ 2026-08-31（選開始日會自動帶到當月最後一天）
+3. 租戶下拉選「全系統」可一次看到所有租戶的**可計費總數**與各自的計費算法
+4. 選特定租戶可看統計卡片（可計費總數 / 驗證事件數 / 已審核 / 已退件 /
+   待審核 / 未完成），並從租戶列最右側「匯出」下載 CSV
+
+統計卡片可以直接和工具算出來的數字對照，等於多一層驗算。
+看不到「計費報表」選單的話是權限問題，非 admin 角色要另外加權限。

@@ -5,8 +5,15 @@ with 115/07 (2026-07) as the last closed month.
 """
 
 # --- Billing algorithms -------------------------------------------------------
-# ALG1: drop State=Incomplete, then count distinct (EventName, CustomerID).
-# ALG2: drop Source=Agent and State=Incomplete, then count the remaining rows.
+# Definitions follow the SQL in the「e-KYC SaaS 計費報表」Notion page, which is
+# what e-KYC 3.17.0 actually bills on. See algorithms.py for the full queries.
+#
+# ALG1 驗證事件計次: count VerificationEvent rows whose state is not Incomplete.
+# ALG2 狀態轉換計次: count main-event state transitions, excluding Incomplete
+#      and anything sourced from Agent (manual review).
+#
+# 每個租戶的算法設定在後台「SaaS」→「租戶」→「Features」→「計費算法」，
+# 也可以在計費報表的租戶列表直接看到，出報表前值得對一次。
 ALG1 = "algorithm1"
 ALG2 = "algorithm2"
 
